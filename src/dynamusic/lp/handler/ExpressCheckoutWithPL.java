@@ -4,16 +4,14 @@ package dynamusic.lp.handler;
 import atg.commerce.order.purchase.ExpressCheckoutFormHandler;
 import atg.servlet.DynamoHttpServletRequest;
 import atg.servlet.DynamoHttpServletResponse;
-import dynamusic.lp.PLOrderConstants;
 import dynamusic.lp.order.OrderLoyaltyManager;
+import dynamusic.lp.order.validator.SpendPLValidatorFacade;
 import dynamusic.system.validator.ValidationStrategy;
 import dynamusic.system.validator.Validator;
 import dynamusic.system.validator.impl.AddFormExceptionCallback;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public abstract class ExpressCheckoutWithPL extends ExpressCheckoutFormHandler {
 
@@ -27,6 +25,7 @@ public abstract class ExpressCheckoutWithPL extends ExpressCheckoutFormHandler {
     protected ValidationStrategy validationStrategy;
     protected Validator[] validators;
 
+    protected SpendPLValidatorFacade spendPLValidatorFacade;
     protected OrderLoyaltyManager orderLoyaltyManager;
 
     @Override
@@ -69,11 +68,7 @@ public abstract class ExpressCheckoutWithPL extends ExpressCheckoutFormHandler {
     public void setPlToSpend(Integer plToSpend) {
         if (plToSpend != null)
         {
-            Map<String, Object> map = new HashMap<String, Object>();
-            map.put(PLOrderConstants.PROFILE_PARAM, getProfile());
-            map.put(PLOrderConstants.ORDER_PARAM, getOrder());
-            map.put(PLOrderConstants.SPENDPL_PARAM, plToSpend);
-            if(validationStrategy.executeValidation(validators, map, new AddFormExceptionCallback(this)))
+            if(spendPLValidatorFacade.validate(getProfile(), getOrder(), plToSpend, new AddFormExceptionCallback(this)))
             {
                 spendPLHolder.setSpendPL(plToSpend);
                 spendPLHolder.setAmountInCurrency(getOrderLoyaltyManager().plToSpendInCurrency(plToSpend, getOrder()));

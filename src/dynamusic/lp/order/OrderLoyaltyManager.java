@@ -15,6 +15,7 @@ import dynamusic.lp.order.payment.LoyaltyPointPaymentInfo;
 import dynamusic.lp.order.pricing.LoyaltyCalculatorTools;
 import dynamusic.system.command.commandimpl.ChangeItemProperty;
 import dynamusic.system.command.commandimpl.ChangeSingleProperty;
+import dynamusic.system.validator.ValidationStrategy;
 import dynamusic.system.validator.Validator;
 import dynamusic.system.validator.ValidatorCallback;
 
@@ -33,7 +34,6 @@ public class OrderLoyaltyManager extends LoyaltyManager {
     private MutableRepository orderRepository;
 
     private Validator<Map<String,Object>, Void>[] plOrderValidators;
-
 
     @Override
     public void doStartService() throws ServiceException {

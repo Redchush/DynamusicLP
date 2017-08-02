@@ -1,7 +1,6 @@
 package dynamusic.lp.order.command;
 
 
-import atg.repository.MutableRepository;
 import dynamusic.lp.CommandHelper;
 import dynamusic.lp.order.PLOrderConfig;
 import dynamusic.lp.order.payment.LoyaltyPointPaymentInfo;
@@ -57,20 +56,5 @@ public class PLOrderCommandHelper {
     public void setPlOrderConfig(PLOrderConfig plOrderConfig) {
         this.plOrderConfig = plOrderConfig;
     }
-
-
-
-    //    private ChangeListProperty fillChangeCommand(ChangeListProperty command, String mainItemIdValue, String
-//            slaveItemIdValue){
-//        command.setMainRepository((MutableRepository) getOrderRepository());
-//        command.setSlaveRepository(getLoyaltyRepository());
-//        command.setMainItemType(ORDER_TYPE);
-//        command.setSlaveItemType(PL_ORDER_TRANSACTION_TYPE);
-//        command.setMainItemIdValue(mainItemIdValue);
-//        command.setSlaveItemIdValue(slaveItemIdValue);
-//        command.setMainItemSlaveProperty(ORDER_TRANSACTIONS_PRN);
-//        return command;
-//    }
-
 
 }
