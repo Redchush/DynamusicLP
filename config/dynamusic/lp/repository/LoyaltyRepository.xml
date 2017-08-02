@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE gsa-template
+    PUBLIC "-//Art Technology Group, Inc.//DTD General SQL Adapter//EN"
+    "http://www.atg.com/dtds/gsa/gsa_1.0.dtd">
+
+<gsa-template xml-combine="append">
+  <header>
+    <name>LoyaltyRepository</name>
+    <author/>
+  </header>
+
+  <item-descriptor name="loyaltyTransaction">
+    <table name="dynamusic_lp_transaction" type="primary">
+      <property name="type" required="true">
+        <option value="loyaltyOrderTransaction" code="5000"/>
+      </property>
+    </table>
+  </item-descriptor>
+
+  <!--<item-descriptor name="loyaltyOrderTransaction" super-type="loyaltyTransaction"-->
+                   <!--sub-type-value="loyaltyOrderTransaction" display-name-resource="itemDescriptorLoyaltyOrderTransaction">-->
+
+    <!--<table name="dynamusic_order_lp" type="multi" id-column-name="transaction_id"-->
+           <!--multi-column-name="sequence_num">-->
+      <!--<property name="order"-->
+                <!--cache-mode="disabled"-->
+                <!--column-name="order_id"-->
+                <!--data-type="list"-->
+                <!--component-item-type="order"-->
+                <!--repository="/atg/commerce/order/OrderRepository"-->
+                <!--category="Order Info">-->
+      <!--</property>-->
+    <!--</table>-->
+  <!--</item-descriptor>-->
+
+
+  <item-descriptor name="loyaltyOrderTransaction" super-type="loyaltyTransaction"
+                   sub-type-value="loyaltyOrderTransaction" display-name-resource="itemDescriptorLoyaltyOrderTransaction">
+
+    <!--<table name="dynamusic_order_lp" type="multi" id-column-name="transaction_id"-->
+           <!--multi-column-name="sequence_num">-->
+      <!--<property name="order"-->
+                <!--cache-mode="disabled"-->
+                <!--column-name="order_id"-->
+                <!--data-type="list"-->
+                <!--component-item-type="order"-->
+                <!--repository="/atg/commerce/order/OrderRepository"-->
+                <!--category="Order Info">-->
+      <!--</property>-->
+    <!--</table>-->
+
+    <!--<table name="dynamusic_plpgstatus_transaction_rel" type="multi" id-column-name="transaction_id"-->
+                       <!--multi-column-name="sequence_num">-->
+    <!--<property name="transaction"-->
+              <!--cache-mode="disabled"-->
+              <!--column-name="pg_status_id"-->
+              <!--data-type="list"-->
+              <!--component-item-type="loyaltyPointPaymentStatus"-->
+              <!--repository="/atg/commerce/order/OrderRepository"-->
+              <!--category="PL">-->
+    <!--</property>-->
+  <!--</table>-->
+
+    <table name="dynamusic_pl_order_transaction" type="auxiliary" id-column-name="transaction_id">
+      <property name="orderId" cache-mode="disabled" column-name="order_id"
+                data-type="String"
+                category="PL"/>
+    </table>
+  </item-descriptor>
+
+
+</gsa-template>

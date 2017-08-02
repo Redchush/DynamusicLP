@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pipelinemanager PUBLIC "-//Art Technology Group, Inc.//DTD Dynamo Pipeline Manager//EN" "http://www.atg.com/dtds/pipelinemanager/pipelinemanager_1.0.dtd">
+<pipelinemanager>
+  <pipelinechain headlink="priceOrderTotal" name="repriceOrder" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="priceOrderTotal" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/pricing/processor/PriceOrderTotal"/>
+      <transition link="updateLoyaltyBonus" returnvalue="1"/>
+      <transition link="updateLoyaltyBonus" returnvalue="2"/>
+    </pipelinelink>
+    <pipelinelink name="updateLoyaltyBonus" transaction="TX_MANDATORY">
+      <processor jndi="/dynamusic/lp/order/processor/ProcUpdateLoyaltyBonus"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="validateOrderForCheckout2" name="moveToPurchaseInfo" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validateOrderForCheckout2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateOrderForCheckout"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="loadOrderObjectForRefresh" name="refreshOrder" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="loadOrderObjectForRefresh" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadOrderObject"/>
+      <transition link="loadCommerceItemObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadCommerceItemObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadCommerceItemObjects"/>
+      <transition link="loadShippingGroupObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadShippingGroupObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadShippingGroupObjects"/>
+      <transition link="loadHandlingInstructionObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadHandlingInstructionObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadHandlingInstructionObjects"/>
+      <transition link="loadPaymentGroupObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadPaymentGroupObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadPaymentGroupObjects"/>
+      <transition link="loadPriceInfoObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadPriceInfoObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadPriceInfoObjects"/>
+      <transition link="loadPaymentStatusObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadPaymentStatusObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadPaymentStatusObjects"/>
+      <transition link="loadRelationshipObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadRelationshipObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadRelationshipObjects"/>
+      <transition link="setCatalogRefs" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="setCatalogRefs" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SetCatalogRefs"/>
+      <transition link="setProductRefs" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="setProductRefs" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SetProductRefs"/>
+      <transition link="removeExpiredCommerceItems" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="removeExpiredCommerceItems" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/RemoveExpiredCommerceItems"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="dispatchOnSGType" name="validateShippingGroup" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validateHardgoodSG" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateHardgoodShippingGroup"/>
+    </pipelinelink>
+    <pipelinelink name="validateElectronicSG" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateElectronicShippingGroup"/>
+    </pipelinelink>
+    <pipelinelink name="dispatchOnSGType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateShippingGroupByType"/>
+      <transition link="validateHardgoodSG" returnvalue="4000"/>
+      <transition link="validateElectronicSG" returnvalue="4001"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="validateShippingGroupsInfo" name="validateShippingInfo" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validateShippingGroupsInfo" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateShippingGroupsForCheckout"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="executeRepriceOrderChainForProcessOrder" name="processOrderWithReprice" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="executeProcessOrderAfterReprice" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ExecuteProcessOrderChain"/>
+    </pipelinelink>
+    <pipelinelink name="executeRepriceOrderChainForProcessOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/pricing/processor/ExecuteRepriceOrderChain"/>
+      <transition link="executeProcessOrderAfterReprice" returnvalue="1"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="validateOrderForCheckout" name="validateForCheckout" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validateOrderForCheckout" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateOrderForCheckout"/>
+      <transition link="verifyOrderAddresses" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="verifyOrderAddresses" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/VerifyOrderAddresses"/>
+      <transition link="validateShippingGroupsForCheckout" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="validateShippingGroupsForCheckout" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateShippingGroupsForCheckout"/>
+      <transition link="creditCardModCheck" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="creditCardModCheck" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/CreditCardModCheck"/>
+      <transition link="validatePaymentGroupsForCheckout" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="validatePaymentGroupsForCheckout" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidatePaymentGroupsForCheckout"/>
+      <transition link="validateShippingCostsForCheckout" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="validateShippingCostsForCheckout" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateShippingCostsForCheckout"/>
+      <transition link="validateOrderCostsForCheckout" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="validateOrderCostsForCheckout" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateOrderCostsForCheckout"/>
+      <transition link="validateHandlingInstructionsForCheckout" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="validateHandlingInstructionsForCheckout" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateHandlingInstructionsForCheckout"/>
+      <transition link="validateCurrencyCodes" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="validateCurrencyCodes" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateCurrencyCodes"/>
+      <transition link="checkForDiscontinuedProducts" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="checkForDiscontinuedProducts" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/CheckForDiscontinuedProducts"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="setPaymentGroupAmount2" name="recalcPaymentGroupAmounts" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="setPaymentGroupAmount2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SetPaymentGroupAmount"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="dispatchOnPGTypePreConfirmation" name="validatePaymentGroupPreConfirmation" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validateCreditCardPGPreConfirmation" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateCreditCard"/>
+    </pipelinelink>
+    <pipelinelink name="validateGiftCertificatePGPreConfirmation" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateGiftCertificate"/>
+    </pipelinelink>
+    <pipelinelink name="validateStoreCreditPGPreConfirmation" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateStoreCredit"/>
+    </pipelinelink>
+    <pipelinelink name="dispatchOnPGTypePreConfirmation" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidatePaymentGroupByType"/>
+      <transition link="validateCreditCardPGPreConfirmation" returnvalue="4000"/>
+      <transition link="validateGiftCertificatePGPreConfirmation" returnvalue="4001"/>
+      <transition link="validateStoreCreditPGPreConfirmation" returnvalue="4002"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="executeRepriceOrderChainForInvalidation" name="repriceOrderForInvalidation" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="executeRepriceOrderChainForInvalidation" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/pricing/processor/ExecuteRepriceOrderChain"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="executeValidateForCheckoutChain" name="processOrder" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="checkForExpiredPromotions" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/CheckForExpiredPromotions"/>
+      <transition link="removeEmptyShippingGroups" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="removeEmptyShippingGroups" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/RemoveEmptyShippingGroups"/>
+      <transition link="removeEmptyPaymentGroups" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="removeEmptyPaymentGroups" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/RemoveEmptyPaymentGroups"/>
+      <transition link="createImplicitRelationships" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="createImplicitRelationships" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/CreateImplicitRelationships"/>
+      <transition link="setPaymentGroupAmount" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="setPaymentGroupAmount" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SetPaymentGroupAmount"/>
+      <transition link="handleLoyaltyPayment" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="handleLoyaltyPayment" transaction="TX_MANDATORY">
+      <processor jndi="/dynamusic/lp/order/processor/ProcHandleLoyaltyPayment"/>
+      <transition link="moveUsedPromotions" returnvalue="1"/>
+      <transition link="moveUsedPromotions" returnvalue="2"/>
+    </pipelinelink>
+    <pipelinelink name="moveUsedPromotions" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/MoveUsedPromotions"/>
+      <transition link="authorizePayment" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="authorizePayment" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/AuthorizePayment"/>
+      <transition link="updateGiftRepository" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updateGiftRepository" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/UpdateGiftRepository"/>
+      <transition link="sendGiftPurchasedMessage" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="sendGiftPurchasedMessage" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SendGiftPurchasedMessage"/>
+      <transition link="setStimulusMarkers" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="setStimulusMarkers" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SetStimulusMarkers"/>
+      <transition link="addOrderToRepository" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="addOrderToRepository" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/AddOrderToRepository"/>
+      <transition link="sendPromotionUsedMessage" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="sendPromotionUsedMessage" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SendPromotionUsedMessage"/>
+      <transition link="sendFulfillmentMessage" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="sendFulfillmentMessage" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SendFulfillmentMessage"/>
+    </pipelinelink>
+    <pipelinelink name="executeValidateForCheckoutChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ExecuteValidateForCheckoutChain"/>
+      <transition link="checkForExpiredPromotions" returnvalue="1"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="executeRepriceOrderChain" name="moveToConfirmation" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validatePaymentGroupsPreConfirmation" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidatePaymentGroupsPreConfirmation"/>
+      <transition link="executeValidateForCheckoutChain2" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="executeValidateForCheckoutChain2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ExecuteValidateForCheckoutChain"/>
+    </pipelinelink>
+    <pipelinelink name="executeRepriceOrderChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/pricing/processor/ExecuteRepriceOrderChain"/>
+      <transition link="validatePaymentGroupsPreConfirmation" returnvalue="1"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="sendMessage" name="sendScenarioEvent" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="sendMessage" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SendScenarioEvent"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="updateOrderObject" name="updateOrder" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="updateOrderObject" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SaveOrderObject"/>
+      <transition link="updateCommerceItemObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updateCommerceItemObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SaveCommerceItemObjects"/>
+      <transition link="updateShippingGroupObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updateShippingGroupObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SaveShippingGroupObjects"/>
+      <transition link="updateHandlingInstructionObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updateHandlingInstructionObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SaveHandlingInstructionObjects"/>
+      <transition link="updatePaymentGroupObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updatePaymentGroupObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SavePaymentGroupObjects"/>
+      <transition link="updatePaymentStatusObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updatePaymentStatusObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SavePaymentStatusObjects"/>
+      <transition link="updateRelationshipObjects" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="updateRelationshipObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SaveRelationshipObjects"/>
+      <transition link="UpdateBonus" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="UpdateBonus" transaction="TX_MANDATORY">
+      <processor jndi="/dynamusic/lp/order/processor/ProcUpdateLoyaltyBonus"/>
+      <transition returnvalue="1" link="updatePriceInfoObjects"/>
+    </pipelinelink>
+    <pipelinelink name="updatePriceInfoObjects" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SavePriceInfoObjects"/>
+      <transition link="saveManualAdjustments" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="saveManualAdjustments" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SaveManualAdjustments"/>
+      <transition link="setLastModifiedTime" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="setLastModifiedTime" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/SetLastModifiedTime"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="dispatchOnPGType" name="validatePaymentGroup" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="validateCreditCardPG" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateCreditCard"/>
+    </pipelinelink>
+    <pipelinelink name="validateGiftCertificatePG" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateGiftCertificate"/>
+    </pipelinelink>
+    <pipelinelink name="validateStoreCreditPG" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidateStoreCredit"/>
+    </pipelinelink>
+    <pipelinelink name="dispatchOnPGType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/ValidatePaymentGroupByType"/>
+      <transition link="validateCreditCardPG" returnvalue="4000"/>
+      <transition link="validateGiftCertificatePG" returnvalue="4001"/>
+      <transition link="validateStoreCreditPG" returnvalue="4002"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="executeRepriceOrderChainForUpdate" name="repriceAndUpdateOrder" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="updateOrderAfterReprice" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/UpdateOrder"/>
+    </pipelinelink>
+    <pipelinelink name="executeRepriceOrderChainForUpdate" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/pricing/processor/ExecuteRepriceOrderChain"/>
+      <transition link="updateOrderAfterReprice" returnvalue="1"/>
+    </pipelinelink>
+  </pipelinechain>
+  <pipelinechain headlink="loadOrderObject" name="loadOrder" transaction="TX_REQUIRED" xml-combine="replace">
+    <pipelinelink name="loadOrderObject" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadOrderObject"/>
+      <transition link="loadPriceInfoObjectsForOrder" returnvalue="1"/>
+    </pipelinelink>
+    <pipelinelink name="loadPriceInfoObjectsForOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/order/processor/LoadPriceInfoObjects"/>
+    </pipelinelink>
+  </pipelinechain>
+</pipelinemanager>

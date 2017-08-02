@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/dspjspTaglib1_0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/jstl-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/jstl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/javax.el-api-2.2.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/jaxen-full.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/saxpath.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/standard.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Dynamusic/j2ee-apps/dynamusic-j2ee/dynamusic-web.war/WEB-INF/lib/jdbc2_0-stdext.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

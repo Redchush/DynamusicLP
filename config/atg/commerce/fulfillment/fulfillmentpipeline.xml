@@ -1,0 +1,817 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE pipelinemanager
+    PUBLIC "-//Art Technology Group, Inc.//DTD Dynamo Pipeline Manager//EN"
+    'http://www.atg.com/dtds/pipelinemanager/pipelinemanager_1.0.dtd'>
+
+<pipelinemanager>
+
+  <!-- This chain processes a submitOrder message in the OrderFulfiller -->
+  <pipelinechain name="handleSubmitOrder" transaction="TX_REQUIRED" headlink="extractOrderId">
+    <pipelinelink name="extractOrderId" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="handleRetrieveOrder"/>
+    </pipelinelink>
+    <pipelinelink name="handleRetrieveOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleRetrieveOrder"/>
+      <transition returnvalue="1" link="loadSaveOrder"/>
+      <transition returnvalue="2" link="loadOrder"/>
+    </pipelinelink>
+    <pipelinelink name="loadSaveOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadSaveOrderRepository"/>
+      <transition returnvalue="1" link="verifyOrderForFulfillment"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="verifyOrderForFulfillment"/>
+    </pipelinelink>
+    <pipelinelink name="verifyOrderForFulfillment" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyOrderForFulfillment"/>
+      <transition returnvalue="1" link="splitShippingGroupsFulfillmentChain"/>
+    </pipelinelink>
+    <pipelinelink name="splitShippingGroupsFulfillmentChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SplitShippingGroupsFulfillmentChain"/>
+      <transition returnvalue="1" link="executeFulfillOrderFragmentChain"/>
+    </pipelinelink>
+    <pipelinelink name="executeFulfillOrderFragmentChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExecuteFulfillOrderFragmentChain"/>
+      <transition returnvalue="1" link="updateOrderRepository"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- splits shipping groups for more than one fulfiller -->
+  <pipelinechain name="splitShippingGroupsFulfillment" transaction="TX_REQUIRED" headlink="retrieveShippingGroupsToBeSplit">
+    <pipelinelink name="retrieveShippingGroupsToBeSplit" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RetrieveShippingGroupsToBeSplit"/>
+      <transition returnvalue="1" link="splitShippingGroupsForFulfillment"/>
+    </pipelinelink>
+    <pipelinelink name="splitShippingGroupsForFulfillment" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SplitShippingGroupsForFulfillment"/>
+    </pipelinelink>
+  </pipelinechain>
+
+
+  <!-- delegates a fulfillOrderFragment message to fulfillers -->
+  <pipelinechain name="executeFulfillOrderFragment" transaction="TX_REQUIRED" headlink="verifyShippingGroupsForFulfillers">
+    <pipelinelink name="verifyShippingGroupsForFulfillers" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyShippingGroupsForFulfillers"/>
+      <transition returnvalue="1" link="sendFulfillOrderFragment"/>
+    </pipelinelink>
+    <pipelinelink name="sendFulfillOrderFragment" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendFulfillOrderFragment"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- This chain handles a modifyOrder message received by OrderFulfiller -->
+  <pipelinechain name="handleModifyOrder" transaction="TX_REQUIRED" headlink="extractOrderId1">
+    <pipelinelink name="extractOrderId1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="loadOrder1"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="handleModificationClassType"/>
+    </pipelinelink>
+    <pipelinelink name="handleModificationClassType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationClassType"/>
+      <transition returnvalue="1" link="updateOrderRepository1"/>
+      <transition returnvalue="2" link="modificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="modificationNotSupported" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+      <transition returnvalue="1" link="updateOrderRepository1"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification1"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes an idTarget modification sent in a modifyOrder message -->
+  <pipelinechain name="performIdTargetModification" transaction="TX_REQUIRED" headlink="handleModificationTargetType">
+    <pipelinelink name="handleModificationTargetType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationTargetType"/>
+      <transition returnvalue="1" link="performOrderModificationChain"/>
+      <transition returnvalue="2" link="performShippingGroupModification"/>
+      <transition returnvalue="3" link="performItemModification"/>
+      <transition returnvalue="4" link="performRelationshipModification"/>
+      <transition returnvalue="5" link="modificationNotSupported1"/>
+    </pipelinelink>
+    <pipelinelink name="performOrderModificationChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PerformOrderModificationChain"/>
+    </pipelinelink>
+    <pipelinelink name="performShippingGroupModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PerformShippingGroupModification"/>
+    </pipelinelink>
+    <pipelinelink name="performItemModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="performRelationshipModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PerformRelationshipModification"/>
+    </pipelinelink>
+    <pipelinelink name="modificationNotSupported1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes order level modification -->
+  <pipelinechain name="performOrderModification" transaction="TX_REQUIRED" headlink="handleModificationType">
+    <pipelinelink name="handleModificationType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationType"/>
+      <transition returnvalue="1" link="addOrder"/>
+      <transition returnvalue="2" link="removeOrderChain"/>
+      <transition returnvalue="3" link="updateOrder"/>
+    </pipelinelink>
+    <pipelinelink name="addOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="removeOrderChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RemoveOrderChain"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="removeOrder" transaction="TX_REQUIRED" headlink="verifyOrderForRemoval">
+    <pipelinelink name="verifyOrderForRemoval" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyOrderForRemoval"/>
+      <transition returnvalue="1" link="sendModifyOrderForRemoval"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderForRemoval" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderForRemoval"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- This chain processes a modifyOrderNotification message received by OrderFulfiller -->
+  <pipelinechain name="handleModifyOrderNotification" transaction="TX_REQUIRED" headlink="extractOrderId2">
+    <pipelinelink name="extractOrderId2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="loadOrder2"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="handleModificationClassType1"/>
+    </pipelinelink>
+    <pipelinelink name="handleModificationClassType1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationClassType"/>
+      <transition returnvalue="1" link="updateOrderRepository2"/>
+      <transition returnvalue="2" link="modificationNotSupported3"/>
+    </pipelinelink>
+    <pipelinelink name="modificationNotSupported3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+      <transition returnvalue="1" link="updateOrderRepository2"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification2"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes a result of a idTarget modification -->
+  <pipelinechain name="handleIdTargetModification" transaction="TX_REQUIRED" headlink="handleModificationTargetType1">
+    <pipelinelink name="handleModificationTargetType1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationTargetType"/>
+      <transition returnvalue="1" link="handleOrderModification"/>
+      <transition returnvalue="2" link="handleShippingGroupModificationChain"/>
+      <transition returnvalue="3" link="handleItemModification"/>
+      <transition returnvalue="4" link="handleRelationshipModificationChain"/>
+      <transition returnvalue="5" link="modificationNotSupported4"/>
+    </pipelinelink>
+    <pipelinelink name="handleOrderModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+    <pipelinelink name="handleShippingGroupModificationChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleShippingGroupModificationChain"/>
+    </pipelinelink>
+    <pipelinelink name="handleItemModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+    <pipelinelink name="handleRelationshipModificationChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleRelationshipModificationChain"/>
+    </pipelinelink>
+    <pipelinelink name="modificationNotSupported4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes a result of a shippingGroupUpdate modification -->
+  <pipelinechain name="handleShipGroupUpdateModification" transaction="TX_REQUIRED" headlink="shipGroupUpdateModification">
+    <pipelinelink name="shipGroupUpdateModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleShipGroupUpdateModification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes a result of a paymentGroupUpdate modification -->
+  <pipelinechain name="handlePaymentGroupUpdateModification" transaction="TX_REQUIRED" headlink="paymentGroupUpdateModification">
+    <pipelinelink name="paymentGroupUpdateModification" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes a result of a shippingGroup modification -->
+  <pipelinechain name="handleShippingGroupModification" transaction="TX_REQUIRED" headlink="handleModificationType1">
+    <pipelinelink name="handleModificationType1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationType"/>
+      <transition returnvalue="1" link="addShippingGroup"/>
+      <transition returnvalue="2" link="cancelRemoveOrder"/>
+      <transition returnvalue="3" link="updateShippingGroupChain"/>
+    </pipelinelink>
+    <pipelinelink name="addShippingGroup" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+    <pipelinelink name="cancelRemoveOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/CancelRemoveOrder"/>
+    </pipelinelink>
+    <pipelinelink name="updateShippingGroupChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateShippingGroupChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="updateShippingGroup" transaction="TX_REQUIRED" headlink="handleShippingGroupState">
+    <pipelinelink name="handleShippingGroupState" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleShippingGroupState"/>
+      <transition returnvalue="1" link="completeRemoveOrderChain"/>
+      <transition returnvalue="2" link="completeOrderChain"/>
+      <transition returnvalue="3" link="failOrder"/>
+    </pipelinelink>
+    <pipelinelink name="completeRemoveOrderChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/CompleteRemoveOrderChain"/>
+    </pipelinelink>
+    <pipelinelink name="completeOrderChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/CompleteOrderChain"/>
+    </pipelinelink>
+    <pipelinelink name="failOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/FailOrder"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller completes removing order -->
+  <pipelinechain name="completeRemoveOrder" transaction="TX_REQUIRED" headlink="creditOrder">
+    <pipelinelink name="creditOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/CreditOrder"/>
+      <transition returnvalue="1" link="finishRemoveOrder"/>
+    </pipelinelink>
+    <pipelinelink name="finishRemoveOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/FinishRemoveOrder"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The OrderFulfiller completes order after is it over -->
+  <pipelinechain name="completeOrder" transaction="TX_REQUIRED" headlink="settleOrder" xml-combine="replace">
+    <pipelinelink name="settleOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SettleOrder"/>
+      <transition returnvalue="1" link="processLoyaltyBonus"/>
+    </pipelinelink>
+    <pipelinelink name="processLoyaltyBonus" transaction="TX_MANDATORY">
+      <processor jndi="/dynamusic/lp/fulfillment/ProcessLoyaltyBonus"/>
+      <transition returnvalue="1" link="finishOrder"/>
+    </pipelinelink>
+    <pipelinelink name="finishOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/FinishOrder"/>
+    </pipelinelink>
+
+
+
+  </pipelinechain>
+
+  <!-- The OrderFulfiller processes a result of relationship modification -->
+  <pipelinechain name="handleRelationshipModification" transaction="TX_REQUIRED" headlink="handleModificationType2">
+    <pipelinelink name="handleModificationType2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationType"/>
+      <transition returnvalue="1" link="addRelationship"/>
+      <transition returnvalue="2" link="removeRelationship"/>
+      <transition returnvalue="3" link="updateRelationshipChain"/>
+    </pipelinelink>
+    <pipelinelink name="addRelationship" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+    <pipelinelink name="removeRelationship" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/EmptyProcessor"/>
+    </pipelinelink>
+    <pipelinelink name="updateRelationshipChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateRelationshipChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- OrderFulfiller processes a relationship update - removes shipRel's quantity from its CommerceItem -->
+  <pipelinechain name="updateRelationship" transaction="TX_REQUIRED" headlink="handleRelationshipState">
+    <pipelinelink name="handleRelationshipState" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleRelationshipState"/>
+      <transition returnvalue="1" link="removeShipItemRelationshipFromItem"/>
+    </pipelinelink>
+    <pipelinelink name="removeShipItemRelationshipFromItem" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RemoveShipItemRelationshipFromItem"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes a fulfillOrderFragment message -->
+  <pipelinechain name="handleHardgoodFulfillOrderFragment" transaction="TX_REQUIRED" headlink="extractOrderId3">
+    <pipelinelink name="extractOrderId3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="handleRetrieveOrder1"/>
+    </pipelinelink>
+    <pipelinelink name="handleRetrieveOrder1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleRetrieveOrder"/>
+      <transition returnvalue="1" link="loadSaveOrder1"/>
+      <transition returnvalue="2" link="loadOrder3"/>
+    </pipelinelink>
+    <pipelinelink name="loadSaveOrder1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadSaveOrderRepository"/>
+      <transition returnvalue="1" link="processHardgoodShippingGroupsChain"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="processHardgoodShippingGroupsChain"/>
+    </pipelinelink>
+    <pipelinelink name="processHardgoodShippingGroupsChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessHardgoodShippingGroupsChain"/>
+      <transition returnvalue="1" link="updateOrderRepository3"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification3"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes its shipping groups (fulfills) -->
+  <pipelinechain name="processHardgoodShippingGroup" transaction="TX_REQUIRED" headlink="verifyShippingGroupForFulfillment">
+    <pipelinelink name="verifyShippingGroupForFulfillment" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyShippingGroupForFulfillment"/>
+      <transition returnvalue="1" link="allocateShippingGroupChain"/>
+    </pipelinelink>
+    <pipelinelink name="allocateShippingGroupChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/AllocateShippingGroupChain"/>
+      <transition returnvalue="1" link="splitShippingGroupForAvailabilityChain"/>
+    </pipelinelink>
+    <pipelinelink name="splitShippingGroupForAvailabilityChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SplitShippingGroupForAvailabilityChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller allocates shipping group -->
+  <pipelinechain name="allocateShippingGroup" transaction="TX_REQUIRED" headlink="allocateItemRelationshipChain">
+    <pipelinelink name="allocateItemRelationshipChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/AllocateItemRelationshipChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- allocates shipItem relationships -->
+  <pipelinechain name="allocateItemRelationship" transaction="TX_REQUIRED" headlink="retrieveItemRelQuantity">
+    <pipelinelink name="retrieveItemRelQuantity" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RetrieveItemRelQuantity"/>
+      <transition returnvalue="1" link="switchOnCommerceItemType"/>
+    </pipelinelink>
+    <pipelinelink name="switchOnCommerceItemType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SwitchOnCommerceItemType"/>
+      <transition returnvalue="1" link="allocateItemRelQuantityChain"/>
+      <transition returnvalue="2" link="allocateItemRelQuantityForConfigurableItemChain"/>
+    </pipelinelink>
+    <pipelinelink name="allocateItemRelQuantityChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/AllocateItemRelQuantityChain"/>
+    </pipelinelink>
+    <pipelinelink name="allocateItemRelQuantityForConfigurableItemChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/AllocateItemRelQuantityForConfigurableItemChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- allocates actual item's quantity -->
+  <pipelinechain name="allocateItemRelQuantity" transaction="TX_REQUIRED" headlink="handleItemRelationshipState">
+    <pipelinelink name="handleItemRelationshipState" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleItemRelationshipState"/>
+      <transition returnvalue="1" link="purchaseItem"/>
+      <transition returnvalue="2" link="purchaseItemOffPreOrder"/>
+      <transition returnvalue="3" link="purchaseItemOffBackOrder"/>
+    </pipelinelink>
+    <pipelinelink name="purchaseItem" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PurchaseItem"/>
+    </pipelinelink>
+    <pipelinelink name="purchaseItemOffPreOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PurchaseItemOffPreOrder"/>
+    </pipelinelink>
+    <pipelinelink name="purchaseItemOffBackOrder" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PurchaseItemOffBackOrder"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- allocates item quantity for ConfigurableCommerceItem -->
+  <pipelinechain name="allocateItemRelQuantityForConfigurableItem" transaction="TX_REQUIRED" headlink="purchaseConfigurableItem">
+    <pipelinelink name="purchaseConfigurableItem" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PurchaseConfigurableItem"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- Splits shipping groups with available items for shipment -->
+  <pipelinechain name="splitShippingGroupForAvailability" transaction="TX_REQUIRED" headlink="shipAsItemsAreAvailable">
+    <pipelinelink name="shipAsItemsAreAvailable" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ShipAsItemsAreAvailable"/>
+      <transition returnvalue="1" link="splitShippingGroupForAvailableItems"/>
+    </pipelinelink>
+    <pipelinelink name="splitShippingGroupForAvailableItems" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SplitShippingGroupForAvailableItems"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- The HardgoodFulfiller processes an updateInventory message -->
+  <pipelinechain name="handleHardgoodUpdateInventory" transaction="TX_REQUIRED" headlink="retrieveOrderWaitingShipMap">
+    <pipelinelink name="retrieveOrderWaitingShipMap" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RetrieveOrderWaitingShipMap"/>
+      <transition returnvalue="1" link="handleOrderWaitingShipMapChain"/>
+    </pipelinelink>
+    <pipelinelink name="handleOrderWaitingShipMapChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleOrderWaitingShipMapChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="handleOrderWaitingShipMap" transaction="TX_REQUIRED" headlink="lockMessage">
+    <pipelinelink name="lockMessage" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LockMessage"/>
+      <transition returnvalue="1" link="loadOrder4"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="processHardgoodShippingGroupsChain1"/>
+    </pipelinelink>
+    <pipelinelink name="processHardgoodShippingGroupsChain1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessHardgoodShippingGroupsChain"/>
+      <transition returnvalue="1" link="updateOrderRepository4"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification4"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes a modifyOrder message -->
+  <pipelinechain name="handleHardgoodModifyOrder" transaction="TX_REQUIRED" headlink="extractOrderId4">
+    <pipelinelink name="extractOrderId4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="loadOrder5"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="handleModificationClassType2"/>
+    </pipelinelink>
+    <pipelinelink name="handleModificationClassType2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationClassType"/>
+      <transition returnvalue="1" link="updateOrderRepository5"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification5"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes an IdTarget modification forwarded by the OrderFulfiller -->
+  <pipelinechain name="performHardgoodIdTargetModification" transaction="TX_REQUIRED" headlink="handleModificationTargetType2">
+    <pipelinelink name="handleModificationTargetType2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationTargetType"/>
+      <transition returnvalue="2" link="performHardgoodShippingGroupModificationChain"/>
+      <transition returnvalue="3" link="performHardgoodItemModificationChain"/>
+      <transition returnvalue="4" link="performHardgoodRelationshipModificationChain"/>
+    </pipelinelink>
+    <pipelinelink name="performHardgoodShippingGroupModificationChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PerformHardgoodShippingGroupModificationChain"/>
+    </pipelinelink>
+    <pipelinelink name="performHardgoodItemModificationChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PerformHardgoodItemModificationChain"/>
+    </pipelinelink>
+    <pipelinelink name="performHardgoodRelationshipModificationChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/PerformHardgoodRelationshipModificationChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes a shipping group modification forwarded by the OrderFulfiller -->
+  <pipelinechain name="performHardgoodShippingGroupModification" transaction="TX_REQUIRED" headlink="handleModificationType3">
+    <pipelinelink name="handleModificationType3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationType"/>
+      <transition returnvalue="1" link="addHardgoodShippingGroup"/>
+      <transition returnvalue="2" link="removeHardgoodShippingGroupChain"/>
+      <transition returnvalue="3" link="updateHardgoodShippingGroupChain"/>
+    </pipelinelink>
+    <pipelinelink name="addHardgoodShippingGroup" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="removeHardgoodShippingGroupChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RemoveHardgoodShippingGroupChain"/>
+    </pipelinelink>
+    <pipelinelink name="updateHardgoodShippingGroupChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateHardgoodShippingGroupChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller removes a shipping group -->
+  <pipelinechain name="removeHardgoodShippingGroup" transaction="TX_REQUIRED" headlink="verifyShippingGroupForRemoval">
+    <pipelinelink name="verifyShippingGroupForRemoval" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyShippingGroupForRemoval"/>
+      <transition returnvalue="1" link="removeShipItemRelsFromShipGroupChain"/>
+    </pipelinelink>
+    <pipelinelink name="removeShipItemRelsFromShipGroupChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RemoveShipItemRelsFromShipGroupChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="removeShipItemRelsFromShipGroup" transaction="TX_REQUIRED" headlink="verifyShipItemRelationshipForRemoval">
+    <pipelinelink name="verifyShipItemRelationshipForRemoval" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyShipItemRelationshipForRemoval"/>
+      <transition returnvalue="1" link="removeShipItemRelationship"/>
+    </pipelinelink>
+    <pipelinelink name="removeShipItemRelationship" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RemoveShipItemRelationship"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes an shipping group update -->
+  <pipelinechain name="updateHardgoodShippingGroup" transaction="TX_REQUIRED" headlink="handleShippingGroupState1">
+    <pipelinelink name="handleShippingGroupState1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleShippingGroupState"/>
+      <transition returnvalue="4" link="shippingGroupHasShippedChain"/>
+      <transition returnvalue="5" link="modificationNotSupported5"/>
+    </pipelinelink>
+    <pipelinelink name="shippingGroupHasShippedChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ShippingGroupHasShippedChain"/>
+    </pipelinelink>
+    <pipelinelink name="modificationNotSupported5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller completes a shipping group after it has shipped -->
+  <pipelinechain name="shippingGroupHasShipped" transaction="TX_REQUIRED" headlink="verifyShippingGroupForCompletion">
+    <pipelinelink name="verifyShippingGroupForCompletion" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/VerifyShippingGroupForCompletion"/>
+      <transition returnvalue="1" link="finishShippingGroup"/>
+    </pipelinelink>
+    <pipelinelink name="finishShippingGroup" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/FinishShippingGroup"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes an item modification forwarded by the OrderFulfiller -->
+  <pipelinechain name="performHardgoodItemModification" transaction="TX_REQUIRED" headlink="handleModificationType4">
+    <pipelinelink name="handleModificationType4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationType"/>
+      <transition returnvalue="1" link="addHardgoodItem"/>
+      <transition returnvalue="2" link="removeHardgoodItem"/>
+      <transition returnvalue="3" link="updateHardgoodItem"/>
+    </pipelinelink>
+    <pipelinelink name="addHardgoodItem" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="removeHardgoodItem" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="updateHardgoodItem" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodFulfiller processes a relationship modification forwarded by the OrderFulfiller -->
+  <pipelinechain name="performHardgoodRelationshipModification" transaction="TX_REQUIRED" headlink="handleModificationType5">
+    <pipelinelink name="handleModificationType5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationType"/>
+      <transition returnvalue="1" link="addHardgoodRelationship"/>
+      <transition returnvalue="2" link="removeHardgoodRelationship"/>
+      <transition returnvalue="3" link="updateHardgoodRelationship"/>
+    </pipelinelink>
+    <pipelinelink name="addHardgoodRelationship" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="removeHardgoodRelationship" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+    <pipelinelink name="updateHardgoodRelationship" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- This chain processes a modifyOrderNotification message received by OrderFulfiller -->
+  <pipelinechain name="handleHardgoodModifyOrderNotification" transaction="TX_REQUIRED" headlink="extractOrderId5">
+    <pipelinelink name="extractOrderId5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="loadOrder6"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder6" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="handleModificationClassType3"/>
+    </pipelinelink>
+    <pipelinelink name="handleModificationClassType3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationClassType"/>
+      <transition returnvalue="1" link="updateOrderRepository6"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository6" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification6"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification6" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- Hardgoodfulfiller processes a shippingGroupUpdate modification forwarded by the OrderFulfiller -->
+  <pipelinechain name="handleHardgoodShipGroupUpdateModification" transaction="TX_REQUIRED" headlink="extractShippingGroupIds">
+    <pipelinelink name="extractShippingGroupIds" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractShippingGroupIds"/>
+      <transition returnvalue="1" link="processHardgoodShippingGroupsChain2"/>
+    </pipelinelink>
+    <pipelinelink name="processHardgoodShippingGroupsChain2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessHardgoodShippingGroupsChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- HardgoodShipper ships shipping groups that ready for shipment -->
+  <pipelinechain name="shipPendingShippingGroups" transaction="TX_REQUIRED" headlink="retrieveOrderPendingShipMap">
+    <pipelinelink name="retrieveOrderPendingShipMap" transaction="TX_REQUIRES_NEW">
+      <processor jndi="/atg/commerce/fulfillment/processor/RetrieveOrderPendingShipMap"/>
+      <transition returnvalue="1" link="handleOrderPendingShipMapChain"/>
+    </pipelinelink>
+    <pipelinelink name="handleOrderPendingShipMapChain" transaction="TX_REQUIRES_NEW">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleOrderPendingShipMapChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="shipShippingGroup" transaction="TX_REQUIRED" headlink="lockMessage1">
+    <pipelinelink name="lockMessage1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LockMessage"/>
+      <transition returnvalue="1" link="loadOrder7"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder7" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="shippingGroupHasShippedChain1"/>
+    </pipelinelink>
+    <pipelinelink name="shippingGroupHasShippedChain1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ShippingGroupHasShippedChain"/>
+      <transition returnvalue="1" link="updateOrderRepository7"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository7" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification7"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification7" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- ElectronicFulfiller processes a fulfillOrderFragment message -->
+  <pipelinechain name="handleElectronicFulfillOrderFragment" transaction="TX_REQUIRED" headlink="extractOrderId6">
+    <pipelinelink name="extractOrderId6" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="handleRetrieveOrder2"/>
+    </pipelinelink>
+    <pipelinelink name="handleRetrieveOrder2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleRetrieveOrder"/>
+      <transition returnvalue="1" link="loadSaveOrder2"/>
+      <transition returnvalue="2" link="loadOrder8"/>
+    </pipelinelink>
+    <pipelinelink name="loadSaveOrder2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadSaveOrderRepository"/>
+      <transition returnvalue="1" link="processElectronicShippingGroupsChain"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder8" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="processElectronicShippingGroupsChain"/>
+    </pipelinelink>
+    <pipelinelink name="processElectronicShippingGroupsChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessElectronicShippingGroupsChain"/>
+      <transition returnvalue="1" link="updateOrderRepository8"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository8" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification8"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification8" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- ElectronicFulfiller processes its shipping groups -->
+  <pipelinechain name="processElectronicShippingGroup" transaction="TX_REQUIRED" headlink="allocateElectronicGoodChain">
+    <pipelinelink name="allocateElectronicGoodChain" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/AllocateElectronicGoodChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- ElectronicFulfiller allocates electronic goods and delivers them electronically -->
+  <pipelinechain name="allocateElectronicGood" transaction="TX_REQUIRED" headlink="createElectronicGood">
+    <pipelinelink name="createElectronicGood" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/CreateElectronicGood"/>
+      <transition returnvalue="1" link="handleElectronicSenderType"/>
+    </pipelinelink>
+    <pipelinelink name="handleElectronicSenderType" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleElectronicSenderType"/>
+      <transition returnvalue="1" link="deliverElectronicGoodByTemplate"/>
+      <transition returnvalue="2" link="deliverElectronicGoodByListener"/>
+    </pipelinelink>
+    <pipelinelink name="deliverElectronicGoodByTemplate" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/DeliverElectronicGoodByTemplate"/>
+    </pipelinelink>
+    <pipelinelink name="deliverElectronicGoodByListener" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/DeliverElectronicGoodByListener"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- ElectronicFulfiller processes a modifyOrder message -->
+  <pipelinechain name="handleElectronicModifyOrder" transaction="TX_REQUIRED" headlink="extractOrderId7">
+    <pipelinelink name="extractOrderId7" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="loadOrder9"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder9" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="handleModificationClassType4"/>
+    </pipelinelink>
+    <pipelinelink name="handleModificationClassType4" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationClassType"/>
+      <transition returnvalue="2" link="modificationNotSupported6"/>
+    </pipelinelink>
+    <pipelinelink name="modificationNotSupported6" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ModificationNotSupported"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification9"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification9" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- ElectronicFulfiller processes a modifyOrderNotification message -->
+  <pipelinechain name="handleElectronicModifyOrderNotification" transaction="TX_REQUIRED" headlink="extractOrderId8">
+    <pipelinelink name="extractOrderId8" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractOrderId"/>
+      <transition returnvalue="1" link="loadOrder10"/>
+    </pipelinelink>
+    <pipelinelink name="loadOrder10" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/LoadOrderRepository"/>
+      <transition returnvalue="1" link="handleModificationClassType5"/>
+    </pipelinelink>
+    <pipelinelink name="handleModificationClassType5" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/HandleModificationClassType"/>
+      <transition returnvalue="1" link="updateOrderRepository9"/>
+    </pipelinelink>
+    <pipelinelink name="updateOrderRepository9" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/UpdateOrderRepository"/>
+      <transition returnvalue="1" link="sendModifyOrderNotification10"/>
+    </pipelinelink>
+    <pipelinelink name="sendModifyOrderNotification10" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendModifyOrderNotification"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- ElectrpnocFulfiller processes a shippingGroupUpdate modification forwarded by the OrderFulfiller -->
+  <pipelinechain name="handleElectronicShipGroupUpdateModification" transaction="TX_REQUIRED" headlink="extractShippingGroupIds1">
+    <pipelinelink name="extractShippingGroupIds1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ExtractShippingGroupIds"/>
+      <transition returnvalue="1" link="processElectronicShippingGroupsChain1"/>
+    </pipelinelink>
+    <pipelinelink name="processElectronicShippingGroupsChain1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessElectronicShippingGroupsChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <!-- Backward compatability functionality chains -->
+  <pipelinechain name="sendOrderToFulfiller" transaction="TX_REQUIRED" headlink="sendFulfillOrderFragment1">
+    <pipelinelink name="sendFulfillOrderFragment1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/SendFulfillOrderFragment"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="processHardgoodShippingGroups" transaction="TX_REQUIRED" headlink="processHardgoodShippingGroupsChain3">
+    <pipelinelink name="processHardgoodShippingGroupsChain3" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessHardgoodShippingGroupsChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="retrieveWaitingShipMap" transaction="TX_REQUIRED" headlink="retrieveOrderWaitingShipMap1">
+    <pipelinelink name="retrieveOrderWaitingShipMap1" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/RetrieveOrderWaitingShipMap"/>
+    </pipelinelink>
+  </pipelinechain>
+
+  <pipelinechain name="processElectronicShippingGroups" transaction="TX_REQUIRED" headlink="processElectronicShippingGroupsChain2">
+    <pipelinelink name="processElectronicShippingGroupsChain2" transaction="TX_MANDATORY">
+      <processor jndi="/atg/commerce/fulfillment/processor/ProcessElectronicShippingGroupsChain"/>
+    </pipelinelink>
+  </pipelinechain>
+
+</pipelinemanager>
+    <!-- @version $Id: //product/DCS/main/templates/Fulfillment/config/atg/commerce/fulfillment/fulfillmentpipeline.xml#4 $$Change: 301895 $ -->

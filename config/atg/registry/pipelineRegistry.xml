@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE pipeline-registry-configuration
+    PUBLIC "-//Art Technology Group, Inc.//DTD PipelineRegistry//EN"
+    'http://www.atg.com/dtds/pipelineregistry/pipelineregistry_1.0.dtd'>
+<pipeline-registry-configuration>
+
+  <pipeline-manager-registry xml-combine="append-without-matching">
+
+    <pipeline-manager>
+      <nucleus-path>/atg/commerce/PipelineManager</nucleus-path>
+    </pipeline-manager>
+
+    <pipeline-manager>
+      <nucleus-path>/atg/commerce/Payment</nucleus-path>
+    </pipeline-manager>
+
+  </pipeline-manager-registry>
+
+  <processor-registry xml-combine="append-without-matching">
+    <processor>
+      <nucleus-path>/dynamusic/lp/order/processor/ProcUpdateLoyaltyBonus</nucleus-path>
+      <display-name>UpdateLoyaltyBonus</display-name>
+      <description>recalculate amount of received PL</description>
+      <category>PL</category>
+    </processor>
+
+    <processor>
+      <nucleus-path>/dynamusic/lp/order/processor/ProcUpdateLoyaltyPayments</nucleus-path>
+      <display-name>UpdateLoyaltyPayments</display-name>
+      <description>filling payment by PL payment group. If there no group, expect parameter</description>
+      <category>PL</category>
+    </processor>
+
+    <processor>
+      <nucleus-path>/dynamusic/lp/order/processor/ProcValidateLoyaltyPayment</nucleus-path>
+      <display-name>ValidateLoyaltyPayments</display-name>
+      <description> Custom processor, which check if amount in LoyaltyPayment less than user has, if
+        this group doesn't exist -- check spendPl parameter</description>
+      <category>PL</category>
+
+    </processor>
+
+    <processor>
+      <nucleus-path>/dynamusic/lp/order/processor/ProcHandleLoyaltyPayment</nucleus-path>
+      <display-name>HandleLoyaltyPayment</display-name>
+      <description> Create new payment group and replace on it all ptGrCi.ptGr that possible </description>
+      <category>PL</category>
+    </processor>
+
+    <processor>
+      <nucleus-path>/dynamusic/lp/order/payment/processor/CreateLoyaltyPointPaymentInfo</nucleus-path>
+      <display-name>CreateLoyaltyPointPaymentInfo</display-name>
+      <category>PL</category>
+    </processor>
+
+    <processor>
+      <nucleus-path>/dynamusic/lp/order/payment/processor/ProcessLoyaltyPointPayment</nucleus-path>
+      <display-name>ProcessLoyaltyPointPayment</display-name>
+      <category>PL</category>
+    </processor>
+
+    <processor>
+      <nucleus-path>/dynamusic/lp/fulfillment/ProcessLoyaltyBonus</nucleus-path>
+      <display-name>ProcessLoyaltyBonus</display-name>
+      <category>PL</category>
+    </processor>
+
+  </processor-registry>
+
+</pipeline-registry-configuration>
+<!-- @version $Id: //product/DCS/main/templates/DCS/config/atg/registry/pipelineRegistry.xml#4 $$Change: 301895 $ -->

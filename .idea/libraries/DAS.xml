@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="DAS">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../DynamusicB2C/out/production/DAS/oca-ldap.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../DynamusicB2C/out/production/DAS/batchconfig.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../DynamusicB2C/out/production/DAS/dtmconfig.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../DynamusicB2C/out/production/DAS/config.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../DynamusicB2C/out/production/DAS/jspbatchconfig.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

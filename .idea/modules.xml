@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../B2BCommerce/B2BCommerce.iml" filepath="$PROJECT_DIR$/../B2BCommerce/B2BCommerce.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../B2CCommerce/B2CCommerce.iml" filepath="$PROJECT_DIR$/../B2CCommerce/B2CCommerce.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DCS/CustomCatalogs/CustomCatalogs.iml" filepath="$PROJECT_DIR$/../DCS/CustomCatalogs/CustomCatalogs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DAS/DAS.iml" filepath="$PROJECT_DIR$/../DAS/DAS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DCS/DCS.iml" filepath="$PROJECT_DIR$/../DCS/DCS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DPS/DPS.iml" filepath="$PROJECT_DIR$/../DPS/DPS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DSS/DSS.iml" filepath="$PROJECT_DIR$/../DSS/DSS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Dynamusic/Dynamusic.iml" filepath="$PROJECT_DIR$/../Dynamusic/Dynamusic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Dynamusic-Base/Dynamusic-Base.iml" filepath="$PROJECT_DIR$/../Dynamusic-Base/Dynamusic-Base.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DynamusicB2B/DynamusicB2B.iml" filepath="$PROJECT_DIR$/../DynamusicB2B/DynamusicB2B.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DynamusicB2C/DynamusicB2C.iml" filepath="$PROJECT_DIR$/../DynamusicB2C/DynamusicB2C.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/DynamusicLP.iml" filepath="$PROJECT_DIR$/.idea/DynamusicLP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Fulfillment/Fulfillment.iml" filepath="$PROJECT_DIR$/../Fulfillment/Fulfillment.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Loyalty/Loyalty.iml" filepath="$PROJECT_DIR$/../Loyalty/Loyalty.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../LoyaltyTest/LoyaltyTest.iml" filepath="$PROJECT_DIR$/../LoyaltyTest/LoyaltyTest.iml" />
+    </modules>
+  </component>
+</project>

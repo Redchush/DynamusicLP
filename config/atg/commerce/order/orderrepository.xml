@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE gsa-template
+    PUBLIC "-//Art Technology Group, Inc.//DTD General SQL Adapter//EN"
+    "http://www.atg.com/dtds/gsa/gsa_1.0.dtd">
+
+<gsa-template xml-combine="append">
+
+  <item-descriptor name="orderPriceInfo" >
+    <table name="dynamusic_loyalty_order_price_info" type="auxiliary" id-column-name="info_id">
+      <property name="receivedPL" data-type="int" cache-mode="disabled"
+                column-name="received_pl"
+                category="PL"/>
+      <property name="conversion" data-type="String" column-name="conversion" category="PL"/>
+      <property name="bonusPercent" data-type="int" column-name="bonus_percent" category="PL"/>
+      <property name="bonusRoundRule" data-type="int" column-name="bonus_round_rule" category="PL"/>
+      <property name="transaction" item-type="loyaltyOrderTransaction"
+                repository="/dynamusic/lp/repository/LoyaltyRepository"
+                column-name="transaction_id"
+                category="PL" cascade="update,delete"/>
+    </table>
+  </item-descriptor>
+
+
+  <item-descriptor name="paymentGroup">
+    <table name="dcspp_pay_group" type="primary">
+      <property name="type" required="true">
+        <option value="loyaltyPointPayment" code="42"/>
+      </property>
+    </table>
+  </item-descriptor>
+
+
+  <!--property name="amount" for pl converted in currency-->
+  <item-descriptor name="loyaltyPointPayment" super-type="paymentGroup" sub-type-value="loyaltyPointPayment"
+                   cache-mode="simple" display-name-resource="itemDescriptorLoyaltyPointPayment"
+                   item-cache-timeout="1800">
+    <table name="dynamusic_loyalty_payment" type="auxiliary" id-column-name="payment_group_id">
+      <property name="spendPL" data-type="int" cache-mode="disabled" column-name="spend_pl" category="PL"/>
+      <property name="conversion" data-type="String" column-name="conversion"/>
+      <property name="paymentRoundRule" data-type="int" column-name="payment_round_rule"/>
+      <property name="profileId" data-type="String" column-name="profile_id"/>
+    </table>
+  </item-descriptor>
+
+
+  <item-descriptor name="paymentStatus">
+    <table name="dcspp_pay_status" type="primary">
+      <property name="type">
+        <option value="loyaltyPointPaymentStatus" code="9"/>
+      </property>
+    </table>
+  </item-descriptor>
+
+  <item-descriptor name="loyaltyPointPaymentStatus" super-type="paymentStatus" sub-type-value="loyaltyPointPaymentStatus"
+                   cache-mode="simple" item-cache-timeout="100">
+    <table name="dynamusic_plpg_status" type="auxiliary" id-column-name="pg_status_id">
+      <property name="transaction" cascade="update,delete"
+                cache-mode="disabled"
+                column-name="transaction_id"
+                item-type="loyaltyOrderTransaction"
+                repository="/dynamusic/lp/repository/LoyaltyRepository"
+                category="PL">
+      </property>
+    </table>
+  </item-descriptor>
+
+
+</gsa-template>
